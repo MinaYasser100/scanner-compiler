@@ -1,0 +1,98 @@
+import re
+
+
+# هنا انا عملت class علشان اقدر a create object لكل char هيدخل علي ال Scanner
+class Token:
+    def __init__(self, token_type, value):
+        self.type = token_type
+        self.value = value
+
+    def __str__(self):
+        return f'Token(type: {self.type}, value: {self.value})'
+
+
+class Scanner:
+    # قائمة الأنماط (patterns) بكل أنواع الـ tokens
+    patterns = [
+        # 1. Keywords
+        {'type': 'Keyword', 'pattern': r'\b(auto|break|case|char|const|continue|default|do|double|else|enum|extern'
+                                       r'|float|for|goto|if|inline|int|long|register|restrict|return|short|signed'
+                                       r'|sizeof|static|struct|switch|typedef|union|unsigned|void|volatile|while)\b'},
+
+        # 2. Identifiers
+        {'type': 'Identifier', 'pattern': r'\b[a-zA-Z_]\w*\b'},
+
+        # 3. Operators
+        {'type': 'Operator', 'pattern': r'[+\-*/%=<>!&|^~]+|==|!=|<=|>='},
+
+        # 4. Numeric constants (integers and floats with scientific notation)
+        {'type': 'NumericConstant', 'pattern': r'\b\d+(\.\d+)?(e[+-]?\d+)?\b'},
+
+        # 5. Character constants
+        {'type': 'CharacterConstant', 'pattern': r"'.'"},
+
+        # 6. String literals
+        {'type': 'StringLiteral', 'pattern': r'"[^"]*"'},
+
+        # 7. Special characters
+        {'type': 'SpecialChar', 'pattern': r'[(){}[\],;.]'},
+
+        # 8. Comments
+        {'type': 'Comment', 'pattern': r'//.*|/\*[\s\S]*?\*/'},
+
+        # 9. Whitespace
+        {'type': 'Whitespace', 'pattern': r'[ \t]+'},
+
+        # 10. Newline
+        {'type': 'Newline', 'pattern': r'\n'},
+    ]
+
+    def scan(self, input_text):
+        tokens = []
+        remaining = input_text
+
+        while remaining:
+            matched = False
+
+            for pattern in self.patterns:
+                reg_exp = re.compile(pattern['pattern'])
+                match = reg_exp.match(remaining)
+
+                if match:
+                    value = match.group(0)
+                    if pattern['type'] != 'Whitespace':  # تجاهل المسافات العادية
+                        tokens.append(Token(pattern['type'], value))
+                    remaining = remaining[len(value):]
+                    matched = True
+                    break
+
+            if not matched:
+                print(f"Unrecognized part: {remaining}")  # عرض الجزء اللي مش متعرف عليه
+                raise Exception("Error: Unrecognized token in input")
+
+        return tokens
+
+
+def main():
+    scanner = Scanner()
+    code = '''
+        int main() {
+          float num = 5.2e-3;
+          char letter = 'A';
+          if (num > 0) {
+            printf("Positive number");
+          } else {
+            printf("Negative number");
+          }
+          // This is a comment
+          return 0;
+        }
+    '''
+
+    tokens = scanner.scan(code)
+    for token in tokens:
+        print(token)
+
+
+if __name__ == "__main__":
+    main()
